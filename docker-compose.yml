@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: condo_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: condo_dev
+      POSTGRES_USER: condo_user
+      POSTGRES_PASSWORD: condo_pass
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+
+  api:
+    build: .
+    container_name: condo_api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://condo_user:condo_pass@postgres:5432/condo_dev
+    ports:
+      - '3001:3001'
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:

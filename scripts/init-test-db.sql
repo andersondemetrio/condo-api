@@ -1,0 +1,2 @@
+CREATE DATABASE condo_test;
+GRANT ALL PRIVILEGES ON DATABASE condo_test TO condo_user;
