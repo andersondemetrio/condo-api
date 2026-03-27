@@ -23,9 +23,21 @@ if (process.env.NODE_ENV !== 'test') {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rota raiz - Evita erro 404 ao abrir a URL da Vercel
+app.get('/', (req, res) => {
+  res.json({ 
+    success: true,
+    message: 'Agenda Condomínio API está online!',
+    env: process.env.NODE_ENV 
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', env: process.env.NODE_ENV, timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString() 
+  });
 });
 
 // Routes
@@ -36,8 +48,10 @@ app.use('/api/holidays', require('./routes/holidays.routes'));
 app.use('/api/condo-items', require('./routes/condo-items.routes'));
 app.use('/api/checkout-forms', require('./routes/checkout-forms.routes'));
 
-// 404
-app.use((req, res, next) => next(ApiError.notFound(`Rota ${req.method} ${req.path} nao encontrada`)));
+// 404 Handler
+app.use((req, res, next) => {
+  next(ApiError.notFound(`Rota ${req.method} ${req.path} nao encontrada`));
+});
 
 // Global error handler
 app.use((err, req, res, next) => {

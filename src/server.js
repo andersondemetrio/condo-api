@@ -2,11 +2,10 @@ require('dotenv').config();
 const app = require('./app');
 const { sequelize } = require('./models');
 const cron = require('node-cron');
-const { Op } = require('sequelize');
 
 const PORT = process.env.PORT || 3001;
 
-// Cron: daily reminder at 08:00 for reservations tomorrow
+// Cron: Lembrete diário (Nota: No Vercel Free, crons internos não rodam 24h)
 cron.schedule('0 8 * * *', async () => {
   try {
     const { Reservation, User } = require('./models');
@@ -30,23 +29,23 @@ cron.schedule('0 8 * * *', async () => {
   }
 });
 
-const start = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('[db] Conexao estabelecida com sucesso');
-
-    if (process.env.NODE_ENV === 'development') {
-      // In development, sync without altering (use migrations for schema changes)
-    }
-
-    app.listen(PORT, () => {
-      console.log(`[server] API rodando em http://localhost:${PORT}`);
-      console.log(`[server] Ambiente: ${process.env.NODE_ENV}`);
+/**
+ * Lógica de Inicialização
+ * Na Vercel, o 'sequelize.authenticate' deve ser feito sob demanda ou
+ * apenas exportamos o app. O listen é exclusivo para Local/Dev.
+ */
+if (process.env.NODE_ENV !== 'production') {
+  sequelize.authenticate()
+    .then(() => {
+      console.log('[db] Conexao estabelecida com sucesso');
+      app.listen(PORT, () => {
+        console.log(`[server] API rodando em http://localhost:${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('[server] Falha ao iniciar banco local:', err);
     });
-  } catch (err) {
-    console.error('[server] Falha ao iniciar:', err);
-    process.exit(1);
-  }
-};
+}
 
-start();
+// Essencial para a Vercel funcionar
+module.exports = app;
